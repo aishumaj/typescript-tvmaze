@@ -5,7 +5,7 @@
     "lib" : ["es2015"],
     "module": "commonjs",                     /* Specify module code
     /* Strict Type-Checking Options */
-    "strict": false,                           /* Enable all strict
+    "strict": true,                           /* Enable all strict
     "esModuleInterop": true,                  /* Enables emit interoperability
     /* Advanced Options */
     "skipLibCheck": true,                     /* Skip type checking of declaration files. */

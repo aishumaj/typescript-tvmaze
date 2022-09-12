@@ -1,10 +1,34 @@
 import axios from "axios";
 import * as $ from 'jquery';
+import { StatsChunkOrigin } from "webpack";
 
 const $showsList = $("#showsList");
 const $episodesArea = $("#episodesArea");
 const $searchForm = $("#searchForm");
 
+const API_BASE_URL = "http://api.tvmaze.com";
+const MISSING_IMAGE = "https://tinyurl.com/tv-missing";
+
+interface IListOfShows {
+  id: number,
+  name: string,
+  summary: string,
+  image: string,
+}
+
+interface IListOfShowsFromAPI {
+  id: number,
+  name: string,
+  summary: string,
+  image: { medium: string; } | null,
+}
+
+interface IEpisode {
+  id: number,
+  name: string,
+  season: string,
+  number: number;
+}
 
 /** Given a search term, search for tv shows that match that query.
  *
@@ -13,41 +37,35 @@ const $searchForm = $("#searchForm");
  *    (if no image URL given by API, put in a default image URL)
  */
 
-async function getShowsByTerm(term) {
-  // ADD: Remove placeholder & make request to TVMaze search shows API.
-  return [
-    {
-      id: 1767,
-      name: "The Bletchley Circle",
-      summary:
-        `<p><b>The Bletchley Circle</b> follows the journey of four ordinary
-           women with extraordinary skills that helped to end World War II.</p>
-         <p>Set in 1952, Susan, Millie, Lucy and Jean have returned to their
-           normal lives, modestly setting aside the part they played in
-           producing crucial intelligence, which helped the Allies to victory
-           and shortened the war. When Susan discovers a hidden code behind an
-           unsolved murder she is met by skepticism from the police. She
-           quickly realises she can only begin to crack the murders and bring
-           the culprit to justice with her former friends.</p>`,
-      image:
-          "http://static.tvmaze.com/uploads/images/medium_portrait/147/369403.jpg"
-    }
-  ]
+async function getShowsByTerm(term: string): Promise<IListOfShows[]> {
+  const searchResponse = await axios.get(`${API_BASE_URL}/search/shows?q=${term}`);
+
+  let listOfShows = searchResponse.data.map(function (elem: { show: IListOfShowsFromAPI; }) {
+
+    return {
+      id: elem.show.id,
+      name: elem.show.name,
+      summary: elem.show.summary,
+      image: elem.show.image?.medium || MISSING_IMAGE
+    };
+  });
+
+  return listOfShows;
 }
 
 
 /** Given list of shows, create markup for each and to DOM */
 
-function populateShows(shows) {
+function populateShows(shows: IListOfShows[]): void {
   $showsList.empty();
 
   for (let show of shows) {
     const $show = $(
-        `<div data-show-id="${show.id}" class="Show col-md-12 col-lg-6 mb-4">
+      `<div data-show-id="${show.id}" class="Show col-md-12 col-lg-6 mb-4">
          <div class="media">
            <img
-              src="http://static.tvmaze.com/uploads/images/medium_portrait/160/401704.jpg"
-              alt="Bletchly Circle San Francisco"
+              src="${show.image}"
+              alt="${show.name}"
               class="w-25 me-3">
            <div class="media-body">
              <h5 class="text-primary">${show.name}</h5>
@@ -60,7 +78,8 @@ function populateShows(shows) {
        </div>
       `);
 
-    $showsList.append($show);  }
+    $showsList.append($show);
+  }
 }
 
 
@@ -69,14 +88,14 @@ function populateShows(shows) {
  */
 
 async function searchForShowAndDisplay() {
-  const term = $("#searchForm-term").val();
+  const term = $("#searchForm-term").val() as string;
   const shows = await getShowsByTerm(term);
 
   $episodesArea.hide();
   populateShows(shows);
 }
 
-$searchForm.on("submit", async function (evt) {
+$searchForm.on("submit", async function (evt: JQuery.SubmitEvent): Promise<void> {
   evt.preventDefault();
   await searchForShowAndDisplay();
 });
@@ -85,9 +104,43 @@ $searchForm.on("submit", async function (evt) {
 /** Given a show ID, get from API and return (promise) array of episodes:
  *      { id, name, season, number }
  */
+async function getEpisodesOfShow(id: number) {
+  const episodeListResponse = await axios.get(`${API_BASE_URL}/shows/${id}/episodes`);
+  let episodeList = episodeListResponse.data.map(function (elem: IEpisode) {
+    return {
+      id: elem.id,
+      name: elem.name,
+      season: elem.season,
+      number: elem.number
+    };
+  });
+  return episodeList;
+}
 
-// async function getEpisodesOfShow(id) { }
+/** Takes an array of episode information and creates a list of episodes
+ * underneath show information.
+*/
 
-/** Write a clear docstring for this function... */
+function populateEpisodes(episodes: IEpisode[]): void {
+  $("#episodesList").empty();
+  for (let ep of episodes) {
+    const $ep = $(
+      `<li>${ep.name} (season ${ep.season}, episode ${ep.number})</li>`
+    );
+    $("#episodesList").append($ep);
+  }
+  $("#episodesArea").show();
+}
 
-// function populateEpisodes(episodes) { }
+//QUESTION: Is it necessary to indicate void on functions that update DOM only
+
+/**Pulls the show ID from parent div of episode button clicked, unhides episode
+ * display section, and invokes populateEpisode function.
+ */
+async function getEpisodeListAndDisplay(evt: JQuery.ClickEvent): Promise<void> {
+  let id = $(evt.target).closest(".Show").data("show-id");
+  const episodes = await getEpisodesOfShow(id);
+  populateEpisodes(episodes);
+}
+
+$("#showsList").on("click", ".Show-getEpisodes", getEpisodeListAndDisplay);
