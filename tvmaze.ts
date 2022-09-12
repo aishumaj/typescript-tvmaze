@@ -1,6 +1,5 @@
 import axios from "axios";
 import * as $ from 'jquery';
-import { StatsChunkOrigin } from "webpack";
 
 const $showsList = $("#showsList");
 const $episodesArea = $("#episodesArea");
