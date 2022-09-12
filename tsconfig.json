@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    /* Visit https://aka.ms/tsconfig.json to read more about this file */
+    "target": "es5",                          /* Specify ECMAScript target
+    "lib" : ["es2015"],
+    "module": "commonjs",                     /* Specify module code
+    /* Strict Type-Checking Options */
+    "strict": false,                           /* Enable all strict
+    "esModuleInterop": true,                  /* Enables emit interoperability
+    /* Advanced Options */
+    "skipLibCheck": true,                     /* Skip type checking of declaration files. */
+    "forceConsistentCasingInFileNames": true,  /* Disallow inconsistently-cased references to the same file. */
+    "sourceMap": true
+  }
+}
