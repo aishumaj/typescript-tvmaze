@@ -8,14 +8,14 @@ const $searchForm = $("#searchForm");
 const API_BASE_URL = "http://api.tvmaze.com";
 const MISSING_IMAGE = "https://tinyurl.com/tv-missing";
 
-interface IListOfShows {
+interface IShow {
   id: number,
   name: string,
   summary: string,
   image: string,
 }
 
-interface IListOfShowsFromAPI {
+interface IShowFromAPI {
   id: number,
   name: string,
   summary: string,
@@ -36,10 +36,10 @@ interface IEpisode {
  *    (if no image URL given by API, put in a default image URL)
  */
 
-async function getShowsByTerm(term: string): Promise<IListOfShows[]> {
+async function getShowsByTerm(term: string): Promise<IShow[]> {
   const searchResponse = await axios.get(`${API_BASE_URL}/search/shows?q=${term}`);
 
-  let listOfShows = searchResponse.data.map(function (elem: { show: IListOfShowsFromAPI; }) {
+  let listOfShows = searchResponse.data.map(function (elem: { show: IShowFromAPI; }) {
 
     return {
       id: elem.show.id,
@@ -55,7 +55,7 @@ async function getShowsByTerm(term: string): Promise<IListOfShows[]> {
 
 /** Given list of shows, create markup for each and to DOM */
 
-function populateShows(shows: IListOfShows[]): void {
+function populateShows(shows: IShow[]): void {
   $showsList.empty();
 
   for (let show of shows) {
@@ -86,7 +86,7 @@ function populateShows(shows: IListOfShows[]): void {
  *    Hide episodes area (that only gets shown if they ask for episodes)
  */
 
-async function searchForShowAndDisplay() {
+async function searchForShowAndDisplay():Promise<void> {
   const term = $("#searchForm-term").val() as string;
   const shows = await getShowsByTerm(term);
 
@@ -103,7 +103,7 @@ $searchForm.on("submit", async function (evt: JQuery.SubmitEvent): Promise<void>
 /** Given a show ID, get from API and return (promise) array of episodes:
  *      { id, name, season, number }
  */
-async function getEpisodesOfShow(id: number) {
+async function getEpisodesOfShow(id: number): Promise<IEpisode[]> {
   const episodeListResponse = await axios.get(`${API_BASE_URL}/shows/${id}/episodes`);
   let episodeList = episodeListResponse.data.map(function (elem: IEpisode) {
     return {
@@ -115,6 +115,7 @@ async function getEpisodesOfShow(id: number) {
   });
   return episodeList;
 }
+
 
 /** Takes an array of episode information and creates a list of episodes
  * underneath show information.
@@ -131,7 +132,6 @@ function populateEpisodes(episodes: IEpisode[]): void {
   $("#episodesArea").show();
 }
 
-//QUESTION: Is it necessary to indicate void on functions that update DOM only
 
 /**Pulls the show ID from parent div of episode button clicked, unhides episode
  * display section, and invokes populateEpisode function.

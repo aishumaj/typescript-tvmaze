@@ -12887,7 +12887,6 @@ function populateEpisodes(episodes) {
     }
     $("#episodesArea").show();
 }
-//QUESTION: Is it necessary to indicate void on functions that update DOM only
 /**Pulls the show ID from parent div of episode button clicked, unhides episode
  * display section, and invokes populateEpisode function.
  */
